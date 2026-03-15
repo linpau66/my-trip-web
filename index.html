@@ -1,394 +1,463 @@
-import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Clock, Calendar, Car, Train, Heart, Info, Map as MapIcon, Navigation, Bed, ChevronRight, Play } from 'lucide-react';
-
-// 濟州島座標定義
-const jejuCoords = {
-  "抵達濟州機場": { x: 160, y: 45, dir: "top" },
-  "姊妹麵條 (午餐)": { x: 185, y: 48, dir: "right" },
-  "倫敦貝果博物館": { x: 230, y: 55, dir: "top" },
-  "史努比樂園": { x: 280, y: 85, dir: "right" },
-  "城山日出峰": { x: 355, y: 105, dir: "right" },
-  "牛島 (搭船)": { x: 365, y: 85, dir: "top" },
-  "明品振鮑魚 (早晚餐)": { x: 330, y: 65, dir: "top" },
-  "ECO 小火車 (森林小火車)": { x: 250, y: 85, dir: "top" },
-  "Waterworld (水世界)": { x: 135, y: 185, dir: "bottom" },
-  "馬戲團表演": { x: 105, y: 155, dir: "left" },
-  "熟成到 (午餐)": { x: 155, y: 180, dir: "top" },
-  "天地淵瀑布": { x: 185, y: 205, dir: "bottom" },
-  "西歸浦偶來市場": { x: 205, y: 195, dir: "top" },
-  "正房瀑布": { x: 225, y: 205, dir: "right" },
-  "大浦海岸柱狀節理帶": { x: 135, y: 195, dir: "bottom" },
-  "太平洋樂園 (海豚表演)": { x: 115, y: 185, dir: "left" },
-  "濟州亂打秀": { x: 175, y: 70, dir: "top" },
-  "山茶花之丘": { x: 95, y: 165, dir: "left" },
-  "綠茶博物館 O'sulloc": { x: 80, y: 140, dir: "left" },
-  "9.81 賽車樂園": { x: 100, y: 130, dir: "top" },
-  "Sagye Bada (午餐)": { x: 75, y: 190, dir: "left" },
-  "大元家 (晚餐)": { x: 170, y: 40, dir: "top" },
-  "涯月咖啡街": { x: 70, y: 80, dir: "left" },
-  "汗蒸幕體驗": { x: 150, y: 55, dir: "left" },
-  "東門市場 (夜市)": { x: 175, y: 50, dir: "bottom" },
-  "回到飯店休息": { x: 0, y: 0, skip: true }
-};
-
-const seoulCoords = {
-  "搭機飛往金浦機場": { x: 60, y: 100, dir: "left" },
-  "東大門商圈": { x: 230, y: 100, dir: "right" },
-  "景福宮 (韓服體驗)": { x: 180, y: 80, dir: "top" },
-  "北村韓屋村": { x: 195, y: 70, dir: "right" },
-  "廣藏市場": { x: 215, y: 105, dir: "bottom" },
-  "陳玉華一隻雞 (晚餐)": { x: 235, y: 110, dir: "bottom" },
-  "塗鴉秀 (Painters)": { x: 200, y: 105, dir: "bottom" },
-  "南怡島一日遊": { x: 360, y: 35, dir: "left" },
-  "弘大商圈": { x: 110, y: 120, dir: "left" },
-  "星空圖書館": { x: 260, y: 180, dir: "right" },
-  "樂天世界/樂天塔": { x: 310, y: 170, dir: "right" },
-  "功夫秀": { x: 190, y: 110, dir: "left" },
-  "樂天超市": { x: 170, y: 120, dir: "bottom" },
-  "前往機場": { x: 50, y: 130, dir: "left" },
-  "回到飯店休息": { x: 0, y: 0, skip: true }
-};
-
-const itineraryData = [
-  { day: "Day 1", date: "3/23", location: "濟州北部 -> 東部", hotel: "Sungsan Marina Hotel", events: [
-    { time: "11:00", spot: "抵達濟州機場", kr: "제주국제공항", duration: "1hr", transport: "接駁車", note: "樂天租車取車" },
-    { time: "13:00", spot: "姊妹麵條 (午餐)", kr: "자매국수", duration: "1.5hr", transport: "開車 15min", note: "豬肉湯麵名店" },
-    { time: "15:00", spot: "倫敦貝果博物館", kr: "런던 베이글 뮤지엄 제주", duration: "1hr", transport: "開車 40min", note: "建議先用 CatchTable 預約" },
-    { time: "16:30", spot: "史努比樂園", kr: "스누피 가든", duration: "2hr", transport: "開車 20min", note: "拍照勝地" },
-    { time: "19:00", spot: "回到飯店休息", kr: "성산 마리나 호텔", duration: "-", transport: "開車 25min", note: "入住：Sungsan Marina Hotel" }
-  ]},
-  { day: "Day 2", date: "3/24", location: "濟州東部", hotel: "Sungsan Marina Hotel", events: [
-    { time: "09:00", spot: "城山日出峰", kr: "성산일출봉", duration: "1.5hr", transport: "開車 5min", note: "登高俯瞰海景" },
-    { time: "11:00", spot: "牛島 (搭船)", kr: "우도", duration: "4hr", transport: "搭船 15min", note: "租電動小車環島" },
-    { time: "15:30", spot: "明品振鮑魚 (早晚餐)", kr: "명진전복", duration: "1.5hr", transport: "開車 20min", note: "招牌鮑魚釜飯" },
-    { time: "17:30", spot: "ECO 小火車 (森林小火車)", kr: "에코랜드", duration: "2hr", transport: "開車 35min", note: "浪漫森林鐵道" },
-    { time: "20:00", spot: "回到飯店休息", kr: "성산 마리나 호텔", duration: "-", transport: "開車 30min", note: "回飯店休息" }
-  ]},
-  { day: "Day 3", date: "3/25", location: "濟州東部 -> 南部移動日", hotel: "Chun Ji yeon Crystal Hotel", events: [
-    { time: "09:00", spot: "天地淵瀑布", kr: "천지연폭포", duration: "1hr", transport: "開車 1hr", note: "飯店旁散步" },
-    { time: "11:30", spot: "熟成到 (午餐)", kr: "숙성도 실버 (중문)", duration: "2hr", transport: "開車 10min", note: "提早現場登記吃黑豬肉" },
-    { time: "14:00", spot: "Waterworld (水世界)", kr: "제주워터월드", duration: "2.5hr", transport: "開車 5min", note: "數位光影樂園，午後避暑" },
-    { time: "17:00", spot: "西歸浦偶來市場", kr: "서귀포 매일 올레시장", duration: "2hr", transport: "步行 10min", note: "市場美食採買" },
-    { time: "19:30", spot: "回到飯店休息", kr: "천지연 크리스탈 호텔", duration: "-", transport: "步行 10min", note: "入住：Chun Ji yeon Crystal Hotel" }
-  ]},
-  { day: "Day 4", date: "3/26", location: "濟州南部全日", hotel: "Chun Ji yeon Crystal Hotel", events: [
-    { time: "09:30", spot: "正房瀑布", kr: "정방폭포", duration: "1hr", transport: "開車 10min", note: "直接入海瀑布" },
-    { time: "11:00", spot: "大浦海岸柱狀節理帶", kr: "대포주상절리", duration: "1hr", transport: "開車 20min", note: "壯觀火山地形" },
-    { time: "12:30", spot: "太平洋樂園 (海豚表演)", kr: "퍼시픽 리솜", duration: "1.5hr", transport: "開車 5min", note: "精彩表演" },
-    { time: "14:30", spot: "山茶花之丘", kr: "카멜リア 힐", duration: "2hr", transport: "開車 25min", note: "浪漫拍照點" },
-    { time: "18:00", spot: "回到飯店休息", kr: "천지연 크리스탈 호텔", duration: "-", transport: "開車 30min", note: "回飯店休息" }
-  ]},
-  { day: "Day 5", date: "3/27", location: "濟州西南冒險", hotel: "Pampas Hotel Jeju", events: [
-    { time: "09:00", spot: "綠茶博物館 O'sulloc", kr: "오설록 티 뮤지엄", duration: "1hr", transport: "開車 45min", note: "茶園拍網美照" },
-    { time: "10:00", spot: "馬戲團表演", kr: "제주 서커스 월드", duration: "1.5hr", transport: "開車 5min", note: "驚險機車球秀" },
-    { time: "12:00", spot: "Sagye Bada (午餐)", kr: "사계바다", duration: "1.5hr", transport: "開車 15min", note: "特色辣燉全帶魚" },
-    { time: "14:00", spot: "9.81 賽車樂園", kr: "9.81 파크", duration: "3hr", transport: "開車 10min", note: "3 小時暢玩" },
-    { time: "18:00", spot: "回到飯店休息", kr: "팜파스 호텔 제주", duration: "-", transport: "開車 40min", note: "入住：Pampas Hotel Jeju" }
-  ]},
-  { day: "Day 6", date: "3/28", location: "濟州西北 -> 北部市區", hotel: "Pampas Hotel Jeju", events: [
-    { time: "10:30", spot: "涯月咖啡街", kr: "애월 카페거리", duration: "2.5hr", transport: "開車 35min", note: "海邊散步" },
-    { time: "14:00", spot: "汗蒸幕體驗", kr: "용두암 해수랜드", duration: "1.5hr", transport: "開車 25min", note: "舒緩疲勞" },
-    { time: "16:15", spot: "濟州亂打秀", kr: "제주 난타 전용극장", duration: "1.5hr", transport: "開車 15min", note: "固定 16:15 場次" },
-    { time: "18:30", spot: "大元家 (晚餐)", kr: "대원가", duration: "1.5hr", transport: "開車 10min", note: "鮑魚海鮮鍋" },
-    { time: "20:30", spot: "東門市場 (夜市)", kr: "제주 동문시장", duration: "2hr", transport: "開車 10min", note: "最後採買" },
-    { time: "22:30", spot: "回到飯店休息", kr: "팜파스 호텔 제주", duration: "-", transport: "開車 10min", note: "回飯店休息" }
-  ]},
-  { day: "Day 7", date: "3/29", location: "濟州 -> 首爾", hotel: "Hotel Boutique 9", events: [
-    { time: "14:30", spot: "搭機飛往金浦機場", kr: "김포국제공항", duration: "1.5hr", transport: "飛機", note: "抵達首爾" },
-    { time: "17:00", spot: "飯店 Check-in", kr: "호텔 부티크 9", duration: "1hr", transport: "地鐵", note: "新設洞站飯店" },
-    { time: "19:00", spot: "東大門商圈", kr: "동대문시장", duration: "3hr", transport: "地鐵 5min", note: "DDP 夜景" },
-    { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 5min", note: "入住：Hotel Boutique 9" }
-  ]},
-  { day: "Day 8", date: "3/30", location: "首爾文化巡禮", hotel: "Hotel Boutique 9", events: [
-    { time: "10:00", spot: "景福宮 (韓服體驗)", kr: "경복궁", duration: "3hr", transport: "地鐵", note: "穿韓服免費入場" },
-    { time: "13:30", spot: "北村韓屋村", kr: "북촌한옥마을", duration: "1.5hr", transport: "步行", note: "傳統建築美學" },
-    { time: "15:30", spot: "廣藏市場", kr: "광장시장", duration: "1.5hr", transport: "地鐵", note: "生拌牛肉美食" },
-    { time: "18:00", spot: "陳玉華一隻雞 (晚餐)", kr: "진옥화 할매 원조 닭한마리", duration: "1.5hr", transport: "步行/地鐵", note: "晚餐時間" },
-    { time: "20:00", spot: "塗鴉秀 (Painters)", kr: "페인터즈 극장", duration: "1.5hr", transport: "步行 10min", note: "精彩畫作與喜劇表演，位置鄰近東大門" },
-    { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 10min", note: "回飯店休息" }
-  ]},
-  { day: "Day 9", date: "3/31", location: "首爾郊區一日遊", hotel: "Hotel Boutique 9", events: [
-    { time: "09:00", spot: "南怡島一日遊", kr: "남이섬", duration: "8hr", transport: "KKday 專車", note: "森林與鐵道自行車" },
-    { time: "20:00", spot: "弘大商圈", kr: "홍대거리", duration: "自由", transport: "地鐵", note: "逛街吃宵夜" },
-    { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 20min", note: "回飯店休息" }
-  ]},
-  { day: "Day 10", date: "4/01", location: "首爾現代流行", hotel: "Hotel Boutique 9", events: [
-    { time: "10:30", spot: "星空圖書館", kr: "별마당 도서관", duration: "1hr", transport: "地鐵", note: "打卡拍照" },
-    { time: "15:00", spot: "樂天世界/樂天塔", kr: "롯데월드", duration: "4hr", transport: "地鐵", note: "看夜景" },
-    { time: "20:00", spot: "功夫秀", kr: "점프", duration: "1.5hr", transport: "地鐵", note: "精彩幽默武術劇" },
-    { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 25min", note: "最後一晚" }
-  ]},
-  { day: "Day 11", date: "4/02", location: "歸賦", hotel: "Sweet Home", events: [
-    { time: "11:00", spot: "樂天超市", kr: "롯데마트 서울역점", duration: "2hr", transport: "地鐵", note: "最後採買" },
-    { time: "14:00", spot: "前往機場", kr: "인천국제공항", duration: "1hr", transport: "AREX", note: "平安回家" }
-  ]}
-];
-
-const openNaverMap = (query) => {
-  if (!query) return;
-  const url = `https://map.naver.com/v5/search/${encodeURIComponent(query)}`;
-  window.open(url, '_blank');
-};
-
-const UnifiedMap = ({ selectedDayIndex }) => {
-  const [activeLabelIdx, setActiveLabelIdx] = useState(null);
-  const isSeoul = selectedDayIndex >= 6;
-  const coords = isSeoul ? seoulCoords : jejuCoords;
-  const currentDayEvents = selectedDayIndex !== null ? itineraryData[selectedDayIndex].events : [];
-  
-  const points = currentDayEvents
-    .map(e => ({ ...coords[e.spot], name: e.spot, kr: e.kr }))
-    .filter(p => p.x !== undefined && p.x > 0);
-
-  const getLabelPos = (p) => {
-    const offset = 8;
-    const labelWidth = p.name.length * 10 + 16;
-    const labelHeight = 20;
-    
-    let lx = p.x + offset;
-    let ly = p.y - labelHeight / 2;
-
-    if (p.dir === "top") { lx = p.x - labelWidth / 2; ly = p.y - offset - labelHeight; }
-    if (p.dir === "bottom") { lx = p.x - labelWidth / 2; ly = p.y + offset; }
-    if (p.dir === "left") { lx = p.x - offset - labelWidth; ly = p.y - labelHeight / 2; }
-    if (p.dir === "right") { lx = p.x + offset; ly = p.y - labelHeight / 2; }
-
-    lx = Math.max(5, Math.min(lx, 395 - labelWidth));
-    ly = Math.max(5, Math.min(ly, 245 - labelHeight));
-
-    return { x: lx, y: ly, w: labelWidth, h: labelHeight };
-  };
-
-  return (
-    <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-lg border border-rose-100 mb-6 overflow-hidden">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-rose-500 font-bold text-sm md:text-base">
-          <MapIcon size={18} />
-          <span>{isSeoul ? "首爾地圖" : "濟州島地圖"}</span>
-        </div>
-        <span className="bg-rose-50 px-2 py-0.5 rounded-full text-[9px] text-rose-400 font-bold border border-rose-100">
-          連點兩下導航
-        </span>
-      </div>
-      
-      <div 
-        className="relative aspect-[16/10] bg-blue-50/30 rounded-xl border border-blue-50 shadow-inner overflow-hidden touch-manipulation"
-        onClick={() => setActiveLabelIdx(null)}
-      >
-        <svg viewBox="0 0 400 250" className="w-full h-full transition-all duration-700">
-          {isSeoul ? (
-            <g>
-              <path d="M50,140 Q150,150 250,130 T400,160" fill="none" stroke="#bae6fd" strokeWidth="12" opacity="0.3" /> 
-              <path d="M100,60 Q200,40 300,60 T350,120 T300,180 T150,200 T50,140 Z" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
-            </g>
-          ) : (
-            <path 
-              d="M360,110 C390,140 350,190 300,210 C240,230 150,230 80,200 C30,170 10,120 40,70 C70,30 160,10 240,20 C320,30 340,80 360,110 Z" 
-              fill="#fff" stroke="#fb7185" strokeWidth="1.5" 
-            />
-          )}
-          
-          {Object.entries(coords).map(([name, pos]) => (
-            !pos.skip && <circle key={name} cx={pos.x} cy={pos.y} r="2" fill="#fda4af" opacity="0.15" />
-          ))}
-
-          {points.length > 1 && (
-            <polyline points={points.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#fb7185" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.4" />
-          )}
-
-          {points.map((p, i) => (
-             <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="4" fill="#e11d48" className="shadow-sm" />
-          ))}
-
-          {points.map((p, i) => {
-            if (i === activeLabelIdx) return null;
-            const l = getLabelPos(p);
-            return (
-              <g key={`lbl-${i}`} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setActiveLabelIdx(i); }}>
-                <rect x={l.x} y={l.y} width={l.w} height={l.h} rx="4" fill="white" stroke="#fb7185" strokeWidth="1" />
-                <text x={l.x + l.w/2} y={l.y + l.h/2 + 3} fontSize="8" fontWeight="bold" fill="#334155" textAnchor="middle">{i + 1}. {p.name}</text>
-              </g>
-            );
-          })}
-
-          {activeLabelIdx !== null && points[activeLabelIdx] && (
-            (() => {
-              const p = points[activeLabelIdx];
-              const l = getLabelPos(p);
-              return (
-                <g className="cursor-pointer" onClick={(e) => { e.stopPropagation(); openNaverMap(p.kr); }}>
-                  <rect x={l.x} y={l.y} width={l.w} height={l.h} rx="4" fill="white" stroke="#e11d48" strokeWidth="2" className="shadow-lg" />
-                  <text x={l.x + l.w/2} y={l.y + l.h/2 + 3} fontSize="8" fontWeight="black" fill="#e11d48" textAnchor="middle">{activeLabelIdx + 1}. {p.name}</text>
-                </g>
-              );
-            })()
-          )}
-        </svg>
-
-        {selectedDayIndex === null && (
-          <div className="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-[1px]">
-             <p className="bg-white/90 px-4 py-1.5 rounded-full border border-rose-200 text-rose-500 font-bold shadow-lg text-xs md:text-sm">
-               請選取日期檢視
-             </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDayIndex, setSelectedDayIndex] = useState(null);
-
-  const filteredDays = useMemo(() => {
-    let result = itineraryData;
-    if (selectedDayIndex !== null) result = result.filter((_, idx) => idx === selectedDayIndex);
-    if (searchTerm) {
-      result = result.filter(day => 
-        day.events.some(event => 
-          event.spot.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.kr.includes(searchTerm)
-        )
-      );
-    }
-    return result;
-  }, [searchTerm, selectedDayIndex]);
-
-  return (
-    <div className="min-h-screen bg-rose-50 p-2 md:p-8 font-sans text-slate-800 pb-20">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden border border-rose-100">
-        
-        <div className="bg-gradient-to-r from-rose-400 to-orange-300 p-5 md:p-8 text-white text-center">
-          <div className="flex justify-center items-center gap-2 mb-2">
-            <Heart className="fill-white" size={20} />
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight uppercase">Korea Honeymoon</h1>
-            <Heart className="fill-white" size={20} />
-          </div>
-          <p className="opacity-90 text-sm md:text-lg italic mb-4 md:mb-6">3.23 - 4.2 · 蜜月旅行行程表</p>
-          
-          <div className="relative max-w-md mx-auto mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-500" size={18} />
-            <input 
-              type="text" 
-              placeholder="搜尋景點 (如: 熟成到, 塗鴉秀...)" 
-              className="w-full pl-11 pr-4 py-2.5 rounded-full border-none text-slate-800 shadow-xl outline-none text-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar px-1 touch-pan-x">
-            <button
-              onClick={() => setSelectedDayIndex(null)}
-              className={`flex-shrink-0 px-5 py-2 rounded-xl text-xs font-black transition-all ${
-                selectedDayIndex === null ? 'bg-white text-rose-500 shadow-lg scale-105' : 'bg-rose-500/30 text-white'
-              }`}
-            >
-              ALL
-            </button>
-            {itineraryData.map((day, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedDayIndex(idx)}
-                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black transition-all text-center flex flex-col items-center min-w-[75px] ${
-                  selectedDayIndex === idx ? 'bg-white text-rose-500 shadow-lg scale-105' : 'bg-rose-500/30 text-white'
-                }`}
-              >
-                <span>DAY {idx + 1}</span>
-                <span className="text-[8px] opacity-80 mt-0.5 font-bold">{day.date}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="px-3 md:px-8 mt-4 md:mt-6">
-          <UnifiedMap selectedDayIndex={selectedDayIndex} />
-        </div>
-
-        <div className="p-3 md:p-8">
-          {filteredDays.length === 0 ? (
-            <div className="text-center py-20 text-slate-400 text-sm">找不到相關行程。</div>
-          ) : (
-            filteredDays.map((day, idx) => {
-              const actualIdx = itineraryData.indexOf(day);
-              return (
-                <div key={actualIdx} className="relative animate-fadeIn mb-10 md:mb-16">
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="bg-rose-500 text-white px-4 py-1.5 rounded-xl font-bold shadow-md flex items-center gap-1.5 text-sm">
-                      <Calendar size={14} /> {day.day}
-                    </div>
-                    <div className="text-slate-400 text-[10px] md:text-xs font-bold bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
-                      <MapPin size={10} className="text-rose-400" /> {day.location}
-                    </div>
-                  </div>
-
-                  <div className="space-y-5 ml-2 md:ml-3 border-l-2 border-dashed border-rose-100 pl-6 md:pl-8">
-                    {day.events.map((event, eIdx) => (
-                      <div key={eIdx} className={`relative group transition-all ${event.spot.includes("回到飯店") ? "opacity-90" : ""}`}>
-                        <div className={`absolute -left-[31px] md:-left-[41px] top-5 w-4 h-4 md:w-5 md:h-5 rounded-full bg-white border-2 md:border-4 z-10 shadow-sm ${event.spot.includes("回到飯店") ? "border-slate-300" : "border-rose-400"}`}></div>
-                        
-                        <div className="flex flex-col gap-2">
-                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-1">
-                            <div className="flex items-baseline gap-2">
-                              <span className={`font-mono font-black text-base md:text-lg ${event.spot.includes("回到飯店") ? "text-slate-400" : "text-rose-500"}`}>
-                                {event.time}
-                              </span>
-                              <h3 className={`font-black text-base md:text-xl leading-tight ${event.spot.includes("回到飯店") ? "text-slate-500" : "text-slate-800"}`}>
-                                {event.spot}
-                              </h3>
-                            </div>
-                            
-                            {!event.spot.includes("搭機") && (
-                              <button 
-                                onClick={() => openNaverMap(event.kr)}
-                                className={`flex items-center justify-center gap-1 px-4 py-1.5 rounded-full text-xs font-black self-start md:self-auto transition-all shadow-sm active:scale-95 ${event.spot.includes("回到飯店") ? "bg-slate-100 text-slate-500 border border-slate-200" : "bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-500 hover:text-white"}`}
-                              >
-                                <Navigation size={12} fill="currentColor" /> NAVER 導航
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase">{event.kr}</p>
-                            <div className="flex items-center gap-2">
-                              {event.duration !== "-" && (
-                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
-                                  <Clock size={10} /> {event.duration}
-                                </span>
-                              )}
-                              {event.transport && (
-                                <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
-                                  {actualIdx >= 6 ? <Train size={10} className="text-blue-400" /> : <Car size={10} className="text-emerald-400" />} 
-                                  {event.transport}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {event.note && (
-                            <div className={`text-xs p-2.5 rounded-xl border-l-3 italic shadow-sm leading-relaxed ${event.spot.includes("回到飯店") ? "bg-slate-50 text-slate-400 border-slate-200" : "bg-rose-50/80 text-slate-500 border-rose-200"}`}>
-                              {event.note}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
-      <style jsx>{`
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>韓國蜜月旅行行程表</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM UMD -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fff1f2;
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(8px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
         .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
-        .border-l-3 { border-left-width: 3px; }
-      `}</style>
-    </div>
-  );
-}
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // --- 圖示組件 (替代 Lucide-React 以確保單檔案運作) ---
+        const Icon = ({ name, size = 24, className = "", fill = "none" }) => {
+            const icons = {
+                heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />,
+                search: <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />,
+                map: <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" /><path d="M9 3.5v16" /><path d="M15 4.5v16" />,
+                navigation: <polygon points="3 11 22 2 13 21 11 13 3 11" />,
+                calendar: <rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" />,
+                clock: <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />,
+                mapPin: <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />,
+                bed: <path d="M2 4v16" /><path d="M2 11h18" /><path d="M2 17h20" /><path d="M6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" /><path d="M22 10v10" />,
+                car: <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" />,
+                train: <rect width="16" height="16" x="4" y="2" rx="2" /><path d="M4 11h16" /><path d="M12 2v9" /><path d="m8 18-2 2" /><path d="m16 18 2 2" /><circle cx="8" cy="14" r="1" /><circle cx="16" cy="14" r="1" />
+            };
+            return (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill={fill}
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={className}
+                >
+                    {icons[name]}
+                </svg>
+            );
+        };
+
+        // --- 資料定義 ---
+        const jejuCoords = {
+            "抵達濟州機場": { x: 160, y: 45, dir: "top" },
+            "姊妹麵條 (午餐)": { x: 185, y: 48, dir: "right" },
+            "倫敦貝果博物館": { x: 230, y: 55, dir: "top" },
+            "史努比樂園": { x: 280, y: 85, dir: "right" },
+            "城山日出峰": { x: 355, y: 105, dir: "right" },
+            "牛島 (搭船)": { x: 365, y: 85, dir: "top" },
+            "明品振鮑魚 (早晚餐)": { x: 330, y: 65, dir: "top" },
+            "ECO 小火車 (森林小火車)": { x: 250, y: 85, dir: "top" },
+            "Waterworld (水世界)": { x: 135, y: 185, dir: "bottom" },
+            "馬戲團表演": { x: 105, y: 155, dir: "left" },
+            "熟成到 (午餐)": { x: 155, y: 180, dir: "top" },
+            "天地淵瀑布": { x: 185, y: 205, dir: "bottom" },
+            "西歸浦偶來市場": { x: 205, y: 195, dir: "top" },
+            "正房瀑布": { x: 225, y: 205, dir: "right" },
+            "大浦海岸柱狀節理帶": { x: 135, y: 195, dir: "bottom" },
+            "太平洋樂園 (海豚表演)": { x: 115, y: 185, dir: "left" },
+            "濟州亂打秀": { x: 175, y: 70, dir: "top" },
+            "山茶花之丘": { x: 95, y: 165, dir: "left" },
+            "綠茶博物館 O'sulloc": { x: 80, y: 140, dir: "left" },
+            "9.81 賽車樂園": { x: 100, y: 130, dir: "top" },
+            "Sagye Bada (午餐)": { x: 75, y: 190, dir: "left" },
+            "大元家 (晚餐)": { x: 170, y: 40, dir: "top" },
+            "涯月咖啡街": { x: 70, y: 80, dir: "left" },
+            "汗蒸幕體驗": { x: 150, y: 55, dir: "left" },
+            "東門市場 (夜市)": { x: 175, y: 50, dir: "bottom" },
+            "回到飯店休息": { x: 0, y: 0, skip: true }
+        };
+
+        const seoulCoords = {
+            "搭機飛往金浦機場": { x: 60, y: 100, dir: "left" },
+            "東大門商圈": { x: 230, y: 100, dir: "right" },
+            "景福宮 (韓服體驗)": { x: 180, y: 80, dir: "top" },
+            "北村韓屋村": { x: 195, y: 70, dir: "right" },
+            "廣藏市場": { x: 215, y: 105, dir: "bottom" },
+            "陳玉華一隻雞 (晚餐)": { x: 235, y: 110, dir: "bottom" },
+            "塗鴉秀 (Painters)": { x: 200, y: 105, dir: "bottom" },
+            "南怡島一日遊": { x: 360, y: 35, dir: "left" },
+            "弘大商圈": { x: 110, y: 120, dir: "left" },
+            "星空圖書館": { x: 260, y: 180, dir: "right" },
+            "樂天世界/樂天塔": { x: 310, y: 170, dir: "right" },
+            "功夫秀": { x: 190, y: 110, dir: "left" },
+            "樂天超市": { x: 170, y: 120, dir: "bottom" },
+            "前往機場": { x: 50, y: 130, dir: "left" },
+            "回到飯店休息": { x: 0, y: 0, skip: true }
+        };
+
+        const itineraryData = [
+            { day: "Day 1", date: "3/23", location: "濟州北部 -> 東部", hotel: "Sungsan Marina Hotel", events: [
+                { time: "11:00", spot: "抵達濟州機場", kr: "제주국제공항", duration: "1hr", transport: "接駁車", note: "樂天租車取車" },
+                { time: "13:00", spot: "姊妹麵條 (午餐)", kr: "자매국수", duration: "1.5hr", transport: "開車 15min", note: "豬肉湯麵名店" },
+                { time: "15:00", spot: "倫敦貝果博物館", kr: "런던 베이글 뮤지엄 제주", duration: "1hr", transport: "開車 40min", note: "建議先用 CatchTable 預約" },
+                { time: "16:30", spot: "史努比樂園", kr: "스누피 가든", duration: "2hr", transport: "開車 20min", note: "拍照勝地" },
+                { time: "19:00", spot: "回到飯店休息", kr: "성산 마리나 호텔", duration: "-", transport: "開車 25min", note: "入住：Sungsan Marina Hotel" }
+            ]},
+            { day: "Day 2", date: "3/24", location: "濟州東部", hotel: "Sungsan Marina Hotel", events: [
+                { time: "09:00", spot: "城山日出峰", kr: "성산일출봉", duration: "1.5hr", transport: "開車 5min", note: "登高俯瞰海景" },
+                { time: "11:00", spot: "牛島 (搭船)", kr: "우도", duration: "4hr", transport: "搭船 15min", note: "租電動小車環島" },
+                { time: "15:30", spot: "明品振鮑魚 (早晚餐)", kr: "명진전복", duration: "1.5hr", transport: "開車 20min", note: "招牌鮑魚釜飯" },
+                { time: "17:30", spot: "ECO 小火車 (森林小火車)", kr: "에코랜드", duration: "2hr", transport: "開車 35min", note: "浪漫森林鐵道" },
+                { time: "20:00", spot: "回到飯店休息", kr: "성산 마리나 호텔", duration: "-", transport: "開車 30min", note: "回飯店休息" }
+            ]},
+            { day: "Day 3", date: "3/25", location: "濟州東部 -> 南部移動日", hotel: "Chun Ji yeon Crystal Hotel", events: [
+                { time: "09:00", spot: "天地淵瀑布", kr: "천지연폭포", duration: "1hr", transport: "開車 1hr", note: "飯店旁散步" },
+                { time: "11:30", spot: "熟成到 (午餐)", kr: "숙성도 실버 (중문)", duration: "2hr", transport: "開車 10min", note: "提早現場登記吃黑豬肉" },
+                { time: "14:00", spot: "Waterworld (水世界)", kr: "제주워터월드", duration: "2.5hr", transport: "開車 5min", note: "數位光影樂園，午後避暑" },
+                { time: "17:00", spot: "西歸浦偶來市場", kr: "서귀포 매일 올레시장", duration: "2hr", transport: "步行 10min", note: "市場美食採買" },
+                { time: "19:30", spot: "回到飯店休息", kr: "천지연 크리스탈 호텔", duration: "-", transport: "步行 10min", note: "入住：Chun Ji yeon Crystal Hotel" }
+            ]},
+            { day: "Day 4", date: "3/26", location: "濟州南部全日", hotel: "Chun Ji yeon Crystal Hotel", events: [
+                { time: "09:30", spot: "正房瀑布", kr: "정방폭포", duration: "1hr", transport: "開車 10min", note: "直接入海瀑布" },
+                { time: "11:00", spot: "大浦海岸柱狀節理帶", kr: "대포주상절리", duration: "1hr", transport: "開車 20min", note: "壯觀火山地形" },
+                { time: "12:30", spot: "太平洋樂園 (海豚表演)", kr: "퍼시픽 リソム", duration: "1.5hr", transport: "開車 5min", note: "精彩表演" },
+                { time: "14:30", spot: "山茶花之丘", kr: "카멜리아 힐", duration: "2hr", transport: "開車 25min", note: "浪漫拍照點" },
+                { time: "18:00", spot: "回到飯店休息", kr: "천지연 크리스탈 호텔", duration: "-", transport: "開車 30min", note: "回飯店休息" }
+            ]},
+            { day: "Day 5", date: "3/27", location: "濟州西南冒險", hotel: "Pampas Hotel Jeju", events: [
+                { time: "09:00", spot: "綠茶博物館 O'sulloc", kr: "오설록 티 뮤지엄", duration: "1hr", transport: "開車 45min", note: "茶園拍網美照" },
+                { time: "10:00", spot: "馬戲團表演", kr: "제주 서커스 월드", duration: "1.5hr", transport: "開車 5min", note: "驚險機車球秀" },
+                { time: "12:00", spot: "Sagye Bada (午餐)", kr: "사계바다", duration: "1.5hr", transport: "開車 15min", note: "特色辣燉全帶魚" },
+                { time: "14:00", spot: "9.81 賽車樂園", kr: "9.81 파크", duration: "3hr", transport: "開車 10min", note: "3 小時暢玩" },
+                { time: "18:00", spot: "回到飯店休息", kr: "팜파스 호텔 제주", duration: "-", transport: "開車 40min", note: "入住：Pampas Hotel Jeju" }
+            ]},
+            { day: "Day 6", date: "3/28", location: "濟州西北 -> 北部市區", hotel: "Pampas Hotel Jeju", events: [
+                { time: "10:30", spot: "涯月咖啡街", kr: "애월 카페거리", duration: "2.5hr", transport: "開車 35min", note: "海邊散步" },
+                { time: "14:00", spot: "汗蒸幕體驗", kr: "용두암 해수랜드", duration: "1.5hr", transport: "開車 25min", note: "舒緩疲勞" },
+                { time: "16:15", spot: "濟州亂打秀", kr: "제주 난타 전용극장", duration: "1.5hr", transport: "開車 15min", note: "固定 16:15 場次" },
+                { time: "18:30", spot: "大元家 (晚餐)", kr: "대원가", duration: "1.5hr", transport: "開車 10min", note: "鮑魚海鮮鍋" },
+                { time: "20:30", spot: "東門市場 (夜市)", kr: "제주 동문시장", duration: "2hr", transport: "開車 10min", note: "最後採買" },
+                { time: "22:30", spot: "回到飯店休息", kr: "팜파스 호텔 제주", duration: "-", transport: "開車 10min", note: "回飯店休息" }
+            ]},
+            { day: "Day 7", date: "3/29", location: "濟州 -> 首爾", hotel: "Hotel Boutique 9", events: [
+                { time: "14:30", spot: "搭機飛往金浦機場", kr: "김포국제공항", duration: "1.5hr", transport: "飛機", note: "抵達首爾" },
+                { time: "17:00", spot: "飯店 Check-in", kr: "호텔 부티크 9", duration: "1hr", transport: "地鐵", note: "新設洞站飯店" },
+                { time: "19:00", spot: "東大門商圈", kr: "동대문시장", duration: "3hr", transport: "地鐵 5min", note: "DDP 夜景" },
+                { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 5min", note: "入住：Hotel Boutique 9" }
+            ]},
+            { day: "Day 8", date: "3/30", location: "首爾文化巡禮", hotel: "Hotel Boutique 9", events: [
+                { time: "10:00", spot: "景福宮 (韓服體驗)", kr: "경복궁", duration: "3hr", transport: "地鐵", note: "穿韓服免費入場" },
+                { time: "13:30", spot: "北村韓屋村", kr: "북촌한옥마을", duration: "1.5hr", transport: "步行", note: "傳統建築美學" },
+                { time: "15:30", spot: "廣藏市場", kr: "광장시장", duration: "1.5hr", transport: "地鐵", note: "生拌牛肉美食" },
+                { time: "18:00", spot: "陳玉華一隻雞 (晚餐)", kr: "진옥화 할매 원조 닭한마리", duration: "1.5hr", transport: "步行/地鐵", note: "晚餐時間" },
+                { time: "20:00", spot: "塗鴉秀 (Painters)", kr: "페인터즈 극장", duration: "1.5hr", transport: "步行 10min", note: "精彩表演，鄰近東大門" },
+                { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 10min", note: "回飯店休息" }
+            ]},
+            { day: "Day 9", date: "3/31", location: "首爾郊區一日遊", hotel: "Hotel Boutique 9", events: [
+                { time: "09:00", spot: "南怡島一日遊", kr: "남이섬", duration: "8hr", transport: "KKday 專車", note: "森林與鐵道自行車" },
+                { time: "20:00", spot: "弘大商圈", kr: "홍대거리", duration: "自由", transport: "地鐵", note: "逛街吃宵夜" },
+                { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 20min", note: "回飯店休息" }
+            ]},
+            { day: "Day 10", date: "4/01", location: "首爾現代流行", hotel: "Hotel Boutique 9", events: [
+                { time: "10:30", spot: "星空圖書館", kr: "별마당 도서관", duration: "1hr", transport: "地鐵", note: "打卡拍照" },
+                { time: "15:00", spot: "樂天世界/樂天塔", kr: "롯데월드", duration: "4hr", transport: "地鐵", note: "看夜景" },
+                { time: "20:00", spot: "功夫秀", kr: "점프", duration: "1.5hr", transport: "地鐵", note: "精彩幽默武術劇" },
+                { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 25min", note: "最後一晚" }
+            ]},
+            { day: "Day 11", date: "4/02", location: "歸賦", hotel: "Sweet Home", events: [
+                { time: "11:00", spot: "樂天超市", kr: "롯데마트 서울역점", duration: "2hr", transport: "地鐵", note: "最後採買" },
+                { time: "14:00", spot: "前往機場", kr: "인천국제공항", duration: "1hr", transport: "AREX", note: "平安回家" }
+            ]}
+        ];
+
+        const openNaverMap = (query) => {
+            if (!query) return;
+            const url = `https://map.naver.com/v5/search/${encodeURIComponent(query)}`;
+            window.open(url, '_blank');
+        };
+
+        const UnifiedMap = ({ selectedDayIndex }) => {
+            const [activeLabelIdx, setActiveLabelIdx] = useState(null);
+            const isSeoul = selectedDayIndex >= 6;
+            const coords = isSeoul ? seoulCoords : jejuCoords;
+            const currentDayEvents = selectedDayIndex !== null ? itineraryData[selectedDayIndex].events : [];
+            
+            const points = currentDayEvents
+                .map(e => ({ ...coords[e.spot], name: e.spot, kr: e.kr }))
+                .filter(p => p.x !== undefined && p.x > 0);
+
+            const getLabelPos = (p) => {
+                const offset = 8;
+                const labelWidth = p.name.length * 10 + 16;
+                const labelHeight = 20;
+                
+                let lx = p.x + offset;
+                let ly = p.y - labelHeight / 2;
+
+                if (p.dir === "top") { lx = p.x - labelWidth / 2; ly = p.y - offset - labelHeight; }
+                if (p.dir === "bottom") { lx = p.x - labelWidth / 2; ly = p.y + offset; }
+                if (p.dir === "left") { lx = p.x - offset - labelWidth; ly = p.y - labelHeight / 2; }
+                if (p.dir === "right") { lx = p.x + offset; ly = p.y - labelHeight / 2; }
+
+                lx = Math.max(5, Math.min(lx, 395 - labelWidth));
+                ly = Math.max(5, Math.min(ly, 245 - labelHeight));
+
+                return { x: lx, y: ly, w: labelWidth, h: labelHeight };
+            };
+
+            return (
+                <div className="bg-white p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-lg border border-rose-100 mb-6 overflow-hidden">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 text-rose-500 font-bold text-sm md:text-base">
+                            <Icon name="map" size={18} />
+                            <span>{isSeoul ? "首爾地圖" : "濟州島地圖"}</span>
+                        </div>
+                        <span className="bg-rose-50 px-2 py-0.5 rounded-full text-[9px] text-rose-400 font-bold border border-rose-100 uppercase tracking-widest">
+                            連點兩下導航
+                        </span>
+                    </div>
+                    
+                    <div 
+                        className="relative aspect-[16/10] bg-blue-50/30 rounded-xl border border-blue-50 shadow-inner overflow-hidden touch-manipulation"
+                        onClick={() => setActiveLabelIdx(null)}
+                    >
+                        <svg viewBox="0 0 400 250" className="w-full h-full transition-all duration-700">
+                            {isSeoul ? (
+                                <g>
+                                    <path d="M50,140 Q150,150 250,130 T400,160" fill="none" stroke="#bae6fd" strokeWidth="12" opacity="0.3" /> 
+                                    <path d="M100,60 Q200,40 300,60 T350,120 T300,180 T150,200 T50,140 Z" fill="#fff" stroke="#cbd5e1" strokeWidth="1" />
+                                </g>
+                            ) : (
+                                <path 
+                                    d="M360,110 C390,140 350,190 300,210 C240,230 150,230 80,200 C30,170 10,120 40,70 C70,30 160,10 240,20 C320,30 340,80 360,110 Z" 
+                                    fill="#fff" stroke="#fb7185" strokeWidth="1.5" 
+                                />
+                            )}
+                            
+                            {Object.entries(coords).map(([name, pos]) => (
+                                !pos.skip && <circle key={name} cx={pos.x} cy={pos.y} r="2" fill="#fda4af" opacity="0.15" />
+                            ))}
+
+                            {points.length > 1 && (
+                                <polyline points={points.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#fb7185" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.4" />
+                            )}
+
+                            {points.map((p, i) => (
+                                <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="4" fill="#e11d48" className="shadow-sm" />
+                            ))}
+
+                            {points.map((p, i) => {
+                                if (i === activeLabelIdx) return null;
+                                const l = getLabelPos(p);
+                                return (
+                                    <g key={`lbl-${i}`} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setActiveLabelIdx(i); }}>
+                                        <rect x={l.x} y={l.y} width={l.w} height={l.h} rx="4" fill="white" stroke="#fb7185" strokeWidth="1" />
+                                        <text x={l.x + l.w/2} y={l.y + l.h/2 + 3} fontSize="8" fontWeight="bold" fill="#334155" textAnchor="middle">{i + 1}. {p.name}</text>
+                                    </g>
+                                );
+                            })}
+
+                            {activeLabelIdx !== null && points[activeLabelIdx] && (
+                                (() => {
+                                    const p = points[activeLabelIdx];
+                                    const l = getLabelPos(p);
+                                    return (
+                                        <g className="cursor-pointer" onClick={(e) => { e.stopPropagation(); openNaverMap(p.kr); }}>
+                                            <rect x={l.x} y={l.y} width={l.w} height={l.h} rx="4" fill="white" stroke="#e11d48" strokeWidth="2" className="shadow-lg" />
+                                            <text x={l.x + l.w/2} y={l.y + l.h/2 + 3} fontSize="8" fontWeight="black" fill="#e11d48" textAnchor="middle">{activeLabelIdx + 1}. {p.name}</text>
+                                        </g>
+                                    );
+                                })()
+                            )}
+                        </svg>
+
+                        {selectedDayIndex === null && (
+                            <div className="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-[1px]">
+                                <p className="bg-white/90 px-4 py-1.5 rounded-full border border-rose-200 text-rose-500 font-bold shadow-lg text-xs md:text-sm text-center">
+                                    請選取日期檢視
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        function App() {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedDayIndex, setSelectedDayIndex] = useState(null);
+
+            const filteredDays = useMemo(() => {
+                let result = itineraryData;
+                if (selectedDayIndex !== null) result = result.filter((_, idx) => idx === selectedDayIndex);
+                if (searchTerm) {
+                    result = result.filter(day => 
+                        day.events.some(event => 
+                            event.spot.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            event.kr.includes(searchTerm)
+                        )
+                    );
+                }
+                return result;
+            }, [searchTerm, selectedDayIndex]);
+
+            return (
+                <div className="min-h-screen bg-rose-50 p-2 md:p-8 font-sans text-slate-800 pb-20">
+                    <div className="max-w-4xl mx-auto bg-white rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden border border-rose-100">
+                        
+                        {/* Header Section */}
+                        <div className="bg-gradient-to-r from-rose-400 to-orange-300 p-5 md:p-8 text-white text-center">
+                            <div className="flex justify-center items-center gap-2 mb-2">
+                                <Icon name="heart" size={20} className="fill-white" />
+                                <h1 className="text-2xl md:text-3xl font-black tracking-tight uppercase">Korea Honeymoon</h1>
+                                <Icon name="heart" size={20} className="fill-white" />
+                            </div>
+                            <p className="opacity-90 text-sm md:text-lg italic mb-4 md:mb-6">3.23 - 4.2 · 蜜月旅行行程表</p>
+                            
+                            <div className="relative max-w-md mx-auto mb-6">
+                                <Icon name="search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-500" />
+                                <input 
+                                    type="text" 
+                                    placeholder="搜尋景點 (如: 熟成到, 塗鴉秀...)" 
+                                    className="w-full pl-11 pr-4 py-2.5 rounded-full border-none text-slate-800 shadow-xl outline-none text-sm"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Date Selector */}
+                            <div className="flex overflow-x-auto pb-4 gap-2 no-scrollbar px-1 touch-pan-x">
+                                <button
+                                    onClick={() => setSelectedDayIndex(null)}
+                                    className={`flex-shrink-0 px-5 py-2 rounded-xl text-xs font-black transition-all ${
+                                        selectedDayIndex === null ? 'bg-white text-rose-500 shadow-lg scale-105' : 'bg-rose-500/30 text-white'
+                                    }`}
+                                >
+                                    ALL
+                                </button>
+                                {itineraryData.map((day, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setSelectedDayIndex(idx)}
+                                        className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black transition-all text-center flex flex-col items-center min-w-[75px] ${
+                                            selectedDayIndex === idx ? 'bg-white text-rose-500 shadow-lg scale-105' : 'bg-rose-500/30 text-white'
+                                        }`}
+                                    >
+                                        <span>DAY {idx + 1}</span>
+                                        <span className="text-[8px] opacity-80 mt-0.5 font-bold">{day.date}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Map */}
+                        <div className="px-3 md:px-8 mt-4 md:mt-6">
+                            <UnifiedMap selectedDayIndex={selectedDayIndex} />
+                        </div>
+
+                        {/* Itinerary List */}
+                        <div className="p-3 md:p-8">
+                            {filteredDays.length === 0 ? (
+                                <div className="text-center py-20 text-slate-400 text-sm">找不到相關行程。</div>
+                            ) : (
+                                filteredDays.map((day, idx) => {
+                                    const actualIdx = itineraryData.indexOf(day);
+                                    return (
+                                        <div key={actualIdx} className="relative animate-fadeIn mb-10 md:mb-16">
+                                            <div className="flex items-center gap-2 mb-5">
+                                                <div className="bg-rose-500 text-white px-4 py-1.5 rounded-xl font-bold shadow-md flex items-center gap-1.5 text-sm">
+                                                    <Icon name="calendar" size={14} /> {day.day}
+                                                </div>
+                                                <div className="text-slate-400 text-[10px] md:text-xs font-bold bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
+                                                    <Icon name="mapPin" size={10} className="text-rose-400" /> {day.location}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-5 ml-2 md:ml-3 border-l-2 border-dashed border-rose-100 pl-6 md:pl-8">
+                                                {day.events.map((event, eIdx) => (
+                                                    <div key={eIdx} className={`relative group transition-all ${event.spot.includes("回到飯店休息") ? "opacity-95" : ""}`}>
+                                                        {/* Timeline Dot */}
+                                                        <div className={`absolute -left-[31px] md:-left-[41px] top-5 w-4 h-4 md:w-5 md:h-5 rounded-full bg-white border-2 md:border-4 z-10 shadow-sm ${event.spot.includes("回到飯店休息") ? "border-slate-300" : "border-rose-400"}`}></div>
+                                                        
+                                                        <div className="flex flex-col gap-2">
+                                                            {/* Time & Title Row */}
+                                                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-1">
+                                                                <div className="flex items-baseline gap-2">
+                                                                    <span className={`font-mono font-black text-base md:text-lg ${event.spot.includes("回到飯店休息") ? "text-slate-400" : "text-rose-500"}`}>
+                                                                        {event.time}
+                                                                    </span>
+                                                                    <h3 className={`font-black text-base md:text-xl leading-tight ${event.spot.includes("回到飯店休息") ? "text-slate-500" : "text-slate-800"}`}>
+                                                                        {event.spot}
+                                                                    </h3>
+                                                                </div>
+                                                                
+                                                                {!event.spot.includes("搭機") && (
+                                                                    <button 
+                                                                        onClick={() => openNaverMap(event.kr)}
+                                                                        className={`flex items-center justify-center gap-1 px-4 py-1.5 rounded-full text-xs font-black self-start md:self-auto transition-all shadow-sm active:scale-95 ${event.spot.includes("回到飯店休息") ? "bg-slate-100 text-slate-500 border border-slate-200" : "bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-500 hover:text-white"}`}
+                                                                    >
+                                                                        <Icon name="navigation" size={12} fill="currentColor" /> NAVER 導航
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Info Row */}
+                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                                <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase">{event.kr}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    {event.duration !== "-" && (
+                                                                        <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                                                                            <Icon name="clock" size={10} /> {event.duration}
+                                                                        </span>
+                                                                    )}
+                                                                    {event.transport && (
+                                                                        <span className="text-[10px] text-slate-500 font-bold flex items-center gap-1">
+                                                                            {actualIdx >= 6 ? <Icon name="train" size={10} className="text-blue-400" /> : <Icon name="car" size={10} className="text-emerald-400" />} 
+                                                                            {event.transport}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {/* Note Box */}
+                                                            {event.note && (
+                                                                <div className={`text-xs p-2.5 rounded-xl border-l-4 italic shadow-sm leading-relaxed ${event.spot.includes("回到飯店休息") ? "bg-slate-50 text-slate-400 border-slate-200" : "bg-rose-50/80 text-slate-500 border-rose-200"}`}>
+                                                                    {event.note}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

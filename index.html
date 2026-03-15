@@ -96,8 +96,8 @@
             "回到飯店休息": { x: 0, y: 0, skip: true },
             "從飯店出發": { x: 0, y: 0, skip: true },
             "성산 마리나 호텔": { x: 385, y: 95, dir: "right", type: "hotel" },
-            "천지연 크리스탈 호텔": { x: 215, y: 225, dir: "bottom", type: "hotel" },
-            "팜파斯 호텔注入": { x: 140, y: 15, dir: "top", type: "hotel" }
+            "천지연 크리스탈 호텔": { x: 215, y: 225, dir: "bottom", type: "hotel" }, // 已修正日文字元為韓文 리
+            "팜파斯 호텔 제주": { x: 140, y: 15, dir: "top", type: "hotel" }
         };
 
         const seoulCoords = {
@@ -149,8 +149,8 @@
                 { time: "09:00", spot: "從飯店出發", kr: "천지연 크리스탈 호텔", duration: "-", transport: "", note: "Chun Ji yeon Crystal Hotel" },
                 { time: "09:30", spot: "正房瀑布", kr: "정방폭포", duration: "1hr", transport: "開車 10min", note: "入海瀑布" },
                 { time: "11:00", spot: "大浦海岸柱狀節理帶", kr: "대포주상절리", duration: "1hr", transport: "開車 20min", note: "壯觀景觀" },
-                { time: "12:30", spot: "太平洋樂園 (海豚表演)", kr: "리솜 퍼シフィック", duration: "1.5hr", transport: "開車 5min", note: "精彩表演" },
-                { time: "14:30", spot: "山茶花之丘", kr: "카멜리아 힐", duration: "2hr", transport: "開車 25min", note: "浪漫拍照點" },
+                { time: "12:30", spot: "太平洋樂園 (海豚表演)", kr: "리솜 퍼시픽", duration: "1.5hr", transport: "開車 5min", note: "精彩表演" },
+                { time: "14:30", spot: "山茶花之丘", kr: "카멜リア 힐", duration: "2hr", transport: "開車 25min", note: "浪漫拍照點" },
                 { time: "18:00", spot: "回到飯店休息", kr: "천지연 크리스탈 호텔", duration: "-", transport: "開車 30min", note: "回飯店休息" }
             ]},
             { day: "Day 5", date: "3/27 (五)", location: "濟州西南冒險", hotel: "Pampas Hotel Jeju", events: [
@@ -163,7 +163,7 @@
             ]},
             { day: "Day 6", date: "3/28 (六)", location: "濟州西北 -> 北部市區", hotel: "Pampas Hotel Jeju", events: [
                 { time: "09:30", spot: "從飯店出發", kr: "팜파斯 호텔 제주", duration: "-", transport: "", note: "Pampas Hotel Jeju" },
-                { time: "10:30", spot: "涯月咖啡街", kr: "애월 카페거리", duration: "2.5hr", transport: "開車 35min", note: "海邊步道咖啡廳" },
+                { time: "10:30", spot: "涯月咖啡街", kr: "애월 카페거리", duration: "2.5hr", transport: "開車 5min", note: "海邊步道咖啡廳" },
                 { time: "14:00", spot: "汗蒸幕體驗", kr: "용두암 해수랜드", duration: "1.5hr", transport: "開車 25min", note: "舒緩疲勞" },
                 { time: "16:15", spot: "濟州亂打秀", kr: "제주 난타 전용극장", duration: "1.5hr", transport: "開車 15min", note: "固定於 16:15 觀賞" },
                 { time: "18:30", spot: "大元家 (晚餐)", kr: "대원가", duration: "1.5hr", transport: "開車 10min", note: "鮑魚海鮮鍋" },
@@ -184,7 +184,7 @@
                 { time: "22:00", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 20min", note: "回飯店休息" }
             ]},
             { day: "Day 9", date: "3/31 (二)", location: "首爾文化巡禮", hotel: "Hotel Boutique 9", events: [
-                { time: "09:00", spot: "從飯店出發", kr: "호텔 부티克 9", duration: "-", transport: "", note: "出發前往鍾路區" },
+                { time: "09:00", spot: "從飯店出發", kr: "호텔 부티크 9", duration: "-", transport: "", note: "出發前往鍾路區" },
                 { time: "10:00", spot: "景福宮 (韓服體驗)", kr: "경복궁", duration: "3hr", transport: "地鐵 20min", note: "地鐵 3 號線【景福宮站】5號出口" },
                 { time: "13:30", spot: "北村韓屋村", kr: "북촌한옥마을", duration: "1.5hr", transport: "步行", note: "地鐵 3 號線【安國站】2/3號出口" },
                 { time: "15:30", spot: "廣藏市場", kr: "광장시장", duration: "1.5hr", transport: "地鐵 10min", note: "地鐵 1 號線【鍾路 5 街站】7/8號出口 或 2、5 號線【乙支路 4 街站】4號出口" },
@@ -198,7 +198,7 @@
                 { time: "12:30", spot: "樂天世界/樂天塔", kr: "롯데월드", duration: "3hr", transport: "地鐵 15min", note: "地鐵 2、8 號線【蠶室站】1/2/3/4號出口" },
                 { time: "17:00", spot: "功夫秀", kr: "명보아트홀 점프", duration: "1.5hr", transport: "地鐵 45min", note: "明甫藝術館。地鐵 2、3 號線【乙支路 3 街站】8號出口 或 3、4 號線【忠武路站】7號出口" },
                 { time: "19:00", spot: "晚餐 (鐘路/明洞)", kr: "식사", duration: "2hr", transport: "步行 10min", note: "鄰近地鐵 4 號線【明洞站】或 2 號線【乙支路入口站】" },
-                { time: "21:30", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 10min", note: "最後一晚" }
+                { time: "21:30", spot: "回到飯店休息", kr: "호텔 부티크 9", duration: "-", transport: "地鐵 10min", note: "回飯店休息" }
             ]},
             { day: "Day 11", date: "4/02 (四)", location: "歸賦", hotel: "Sweet Home", events: [
                 { time: "10:00", spot: "從飯店出發", kr: "호텔 부티크 9", duration: "-", transport: "", note: "退房並寄放行李，前往首爾站" },
@@ -249,7 +249,7 @@
                             <Icon name="map" size={18} />
                             <span>{isSeoul ? "首爾市區" : "濟州島地區"} 路線圖</span>
                         </div>
-                        <span className="bg-rose-50 px-2 py-0.5 rounded-full text-[9px] text-rose-400 font-bold border border-rose-100 uppercase tracking-widest">
+                        <span className="bg-rose-50 px-2 py-0.5 rounded-full text-[9px] text-rose-400 font-bold border border-rose-100 uppercase tracking-widest text-shadow-sm">
                             連點兩下標籤導覽
                         </span>
                     </div>
@@ -267,10 +267,12 @@
                             {Object.entries(coords).map(([name, pos]) => (!pos.skip && <circle key={name} cx={pos.x} cy={pos.y} r="2" fill="#fda4af" opacity="0.15" />))}
                             {points.length > 1 && (<polyline points={points.map(p => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#fb7185" strokeWidth="1.5" strokeDasharray="5 3" opacity="0.4" />)}
                             
+                            {/* 先畫景點圓點 */}
                             {points.filter(p => p.type !== 'hotel').map((p, i) => (
                                 <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="4" fill="#e11d48" className="shadow-sm" />
                             ))}
 
+                            {/* 後畫飯店圖示，確保層級置頂 */}
                             {points.filter(p => p.type === 'hotel').map((p, i) => (
                                 <g key={`hotel-${i}`}>
                                     <rect x={p.x - 6} y={p.y - 6} width="12" height="12" rx="2" fill="#3b82f6" className="shadow-sm" />
@@ -340,7 +342,7 @@
                                 <Icon name="search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-500" />
                                 <input 
                                     type="text" 
-                                    placeholder="搜尋已規劃的景點,ex:景福宮、塗鴉秀..." 
+                                    placeholder="搜尋已規劃景點，例如：景福宮、塗鴉秀..." 
                                     className="w-full pl-11 pr-4 py-2.5 rounded-full border-none text-slate-800 shadow-xl outline-none text-sm font-medium"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
